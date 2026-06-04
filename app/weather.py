@@ -2,11 +2,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 import httpx
 import uvicorn
-from tokenfile import getToken
+
+from dotenv import load_dotenv
+from os import getenv
+load_dotenv()
+API_KEY =getenv("API_KEY")
+
+
 app = FastAPI()
-
-
-API_KEY = getToken()
 
 @app.get("/")
 async def index():
@@ -23,7 +26,6 @@ async def weather():
         "lang": "ru",
         "appid": API_KEY,
     }
-
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(url, params=params)
