@@ -1,0 +1,91 @@
+простой гайд подьёма впс. 
+
+Дефолтное подключение по паролю:
+    ssh login@ip-адрес
+обновлении системы:
+    sudo apt update -y
+    sudo apt upgrade -y
+
+НАСТРОЙКИ БЕЗОПАСНОСТИ
+
+Создание SSH ключа:
+    ssh-keygen -t rsa -b 4096 -C "Commentary"
+Отправка публичной половины ключа на сервер:
+    ssh-copy-id login@ip-адрес
+Вход по SSH ключю(пароль не запросится)
+    ssh login@ip-адрес
+    И НЕ ВЫХОДИ БОГОМ МОЛЮ
+
+дальше идёт залупа по причине убунту говноеды.
+они перевели настройки подключений и портов из понятного конфига хуй знает куда, поэтому сейчас активируем управление по старому стилю.
+
+Отключаем новое говно, включаем старое православное говно:
+    sudo systemctl disable --now ssh.socket
+    sudo systemctl enable --now ssh.service
+    sudo systemctl restart ssh
+
+на некоторых vps есть отдельный конфиг подключений который приоритетнее системного, так что найдем его и жестоко перепишем.
+Ищем виновного:
+    sudo grep -ri "PasswordAuthentication" /etc/ssh/sshd_config.d/
+это выдаст нам адрес файла и содержимое строки PasswordAuthentication в нём. в моём случае это /etc/ssh/sshd_config.d/40-hosting.conf:PasswordAuthentication yes.
+падаем в него через редактор:
+    sudo nano /etc/ssh/sshd_config.d/40-hosting.conf
+установливаем следующие параметры:
+    PermitRootLogin prohibit-password
+    PubkeyAuthentication yes
+    PasswordAuthentication no
+
+теперь мы наконец можем пойти редактировать конфиг по всем гайдам в интренете
+
+падаем в конфиг:
+    sudo nano /etc/ssh/sshd_config
+раскомментируем или добавляем\редактируем следующие строки:
+    PermitRootLogin prohibit-password
+    PubkeyAuthentication yes
+    PasswordAuthentication no
+рестартим конфиг:
+    sudo systemctl restart sshd
+теперь если попытаться войти с другой машины без ssh ключа то у нас не получится, доступ по паролю заблокирован.
+также можно поменять порт подключения к SSh, по дефолту 22 
+снова падаем в конфиг:
+    sudo nano /etc/ssh/sshd_config
+меняем порт:
+    Port 20022
+теперь строка подключения к серверу выгляит так :
+    ssh -p 20022 login@ip-адрес
+
+ставим фаерволл:
+    sudo apt install ufw -y
+запрещаем все входящие
+    sudo ufw default deny incoming && sudo ufw default allow outgoing
+открываем только нужные порты:
+    sudo ufw allow 22    # SSH (установи нужный порт если менял)
+    sudo ufw allow 80    # HTTP
+    sudo ufw allow 443   # HTTPS
+    sudo ufw allow 5432  # порт приложения (например, Postgre)
+включаем фаервол:
+    sudo ufw enable
+
+УСТАНОВКА БАЗОВЫХ УТИЛИТ
+    apt install -y sudo curl nano git btop
+Ставим докер через официальный скрипт:
+    curl -fsSL https://get.docker.com | sudo sh
+
+ДОКЕР И POSTGRE
+запусить докер:
+    sudo systemctl start docker
+проверить живой ли докер:
+    sudo systemctl status docker
+поставить докер на автозапуск:
+    sudo systemctl enable docker
+
+создаем контейнер с Postgre слушающий 5432 порт. заменить <text> на что нравитчся
+    sudo docker run -d --name <ContainerName> -e POSTGRES_PASSWORD=<databasePassword> -e POSTGRES_USER=<databaseUser> -e POSTGRES_DB=<databaseName> -p 5432:5432 postgres
+ 
+показать работающие контейнеры:
+    docker container ls
+
+
+
+
+

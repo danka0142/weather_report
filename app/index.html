@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Погода</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .row {
+            margin: 8px 0;
+        }
+
+        .label {
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Текущая погода</h1>
+        <div id="weather">Загрузка...</div>
+    </div>
+
+    <script>
+        async function loadWeather() {
+            const container = document.getElementById("weather");
+
+            try {
+                const response = await fetch("/weather");
+
+                if (!response.ok) {
+                    throw new Error("Ошибка запроса: " + response.status);
+                }
+
+                const data = await response.json();
+
+                container.innerHTML = `
+                    <div class="row"><span class="label">Широта:</span> ${data.lat}</div>
+                    <div class="row"><span class="label">Долгота:</span> ${data.lon}</div>
+                    <div class="row"><span class="label">Часовой пояс:</span> ${data.timezone}</div>
+                    <div class="row"><span class="label">Температура:</span> ${data.temperature} °C</div>
+                    <div class="row"><span class="label">Ощущается как:</span> ${data.feels_like} °C</div>
+                    <div class="row"><span class="label">Влажность:</span> ${data.humidity} %</div>
+                    <div class="row"><span class="label">Давление:</span> ${data.pressure} гПа</div>
+                    <div class="row"><span class="label">Скорость ветра:</span> ${data.wind_speed} м/с</div>
+                    <div class="row"><span class="label">Направление ветра:</span> ${data.wind_deg}°</div>
+                    <div class="row"><span class="label">Облачность:</span> ${data.clouds} %</div>
+                    <div class="row"><span class="label">Видимость:</span> ${data.visibility} м</div>
+                    <div class="row"><span class="label">Описание:</span> ${data.description}</div>
+                    <div class="row">
+                        <span class="label">Иконка:</span>
+                        <img src="https://openweathermap.org/img/wn/${data.icon}@2x.png" alt="weather icon">
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error">Не удалось загрузить погоду: ${error.message}</div>`;
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", loadWeather);
+    </script>
+</body>
+</html>
