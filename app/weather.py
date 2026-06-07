@@ -46,12 +46,5 @@ async def weather():
 
 
 
-
-
-
-
-
-
-
 if __name__ == "__main__":
     uvicorn.run("weather:app", reload=True)
